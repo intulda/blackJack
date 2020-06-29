@@ -1,11 +1,23 @@
 package com.intulda.black.service.model;
 
+import com.intulda.black.service.dao.BlackjackDAO;
+
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 public class DealerDTO {
-    private List<String> cardDTO;
+    private List<String> cards;
+    private List<String> cardDeck;
+    private CardDTO cardDTO;
+    private int money;
+    private String score;
+
+    public DealerDTO() {
+        this.cards = new LinkedList<>();
+        this.score = "0";
+    }
 
     /**
      * 딜러가 카드를 상황조건에 따라 유저에게 주는 함수
@@ -13,19 +25,19 @@ public class DealerDTO {
      * @return
      */
     public List<String> giveCard(String kind) {
-        List<String> cards = null;
-        if(RuleDTO.FIRST_DRAW_CARD.equals(kind)) {
-            cards = new ArrayList<>();
+        List<String> drawCards = null;
+        if(Rule.FIRST_DRAW_CARD.equals(kind)) {
+            drawCards = new LinkedList<>();
             for(int i=0; i<2; i++) {
-                cards.add(this.cardDTO.get(i));
-                this.cardDTO.remove(i);
+                drawCards.add(this.cardDeck.get(i));
+                this.cardDeck.remove(i);
             }
-        } else if(RuleDTO.SECOND_DRAW_CARD.equals(kind)) {
-            cards = new ArrayList<>();
-            cards.add(this.cardDTO.get(0));
-            this.cardDTO.remove(0);
+        } else if(Rule.SECOND_DRAW_CARD.equals(kind)) {
+            drawCards = new LinkedList<>();
+            drawCards.add(this.cardDeck.get(0));
+            this.cardDeck.remove(0);
         }
-        return cards;
+        return drawCards;
     }
 
     /**
@@ -33,19 +45,61 @@ public class DealerDTO {
      * @param cardDTO
      */
     public void setCardDeck(List<String> cardDTO) {
-        this.cardDTO = cardDTO;
+        this.cardDeck = cardDTO;
     }
 
     /**
      * 유저와 공통적으로 셔플 된 카드 세팅
-     * @param message
      */
-    public void setCard(String message) {
-        this.giveCard(message);
+    public void setCard(List<String> takeCards) {
+        BlackjackDAO blackjackDAO = BlackjackDAO.getInstance();
+        this.cardDTO = blackjackDAO.getCardDTO();
+        takeCards.stream()
+                .forEach(x -> this.cards.add(x));
+        this.cardDTO.openCard(this.cards, this);
     }
 
+    /**
+     * 카드 섞기
+     */
     public void shuffle() {
-        Collections.shuffle(this.cardDTO);
+        Collections.shuffle(this.cardDeck);
+    }
+
+    public int getMoney() {
+        return money;
+    }
+
+    public void cardReset(){
+        this.cards = new LinkedList<>();
+    }
+
+    public List<String> getCards() {
+        return cards;
+    }
+
+    public void setCards(List<String> cards) {
+        this.cards = cards;
+    }
+
+    /**
+     * 유저의 돈 10배로 세팅 ( 유저먼저 세팅되어야 한다 )
+     */
+    public void setMoney() {
+        BlackjackDAO blackjackDAO = BlackjackDAO.getInstance();
+        this.money = blackjackDAO.getUserDTO().getMoney() * 10;
+    }
+
+    public void setMoney(int money) {
+        this.money = money;
+    }
+
+    public String getScore() {
+        return score;
+    }
+
+    public void setScore(String score) {
+        this.score = score;
     }
 }
 
